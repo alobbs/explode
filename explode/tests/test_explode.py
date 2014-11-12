@@ -17,10 +17,41 @@ test_explode
 Tests for `explode` module.
 """
 
+import explode
 from explode.tests import base
+
+import os
+import tempfile
 
 
 class TestExplode(base.TestCase):
+    def test_build_explode(self):
+        MAGIC1 = "First file content"
+
+        # Create temporary dirs
+        orig = tempfile.mkdtemp()
+        target = tempfile.mkdtemp()
+
+        # Populate source directory
+        os.makedirs(os.path.join(orig, "a/ccc/bb/dddd"))
+        with open(os.path.join(orig, "a/ccc/file1"), "w+") as f:
+            f.write(MAGIC1)
+
+        # Build data and Expand tree
+        data = explode.build_data(orig)
+        explode.explode_data(data, target)
+
+        for i in range(200):
+            print(os.listdir(target))
+
+        # Test everything is in place
+        with open(os.path.join(target, "a/ccc/file1"), "r") as f:
+            self.assertTrue(MAGIC1 in f.read())
+
+        path = target
+        for d in "a/ccc/bb/dddd".split("/"):
+            path = os.path.join(path, d)
+            self.assertTrue(path)
 
     def test_something(self):
         pass

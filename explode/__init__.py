@@ -34,9 +34,10 @@ def explode_data(data, path='output'):
             explode_data(v, os.path.join(path, k))
     elif type(data) is list:
         logging.debug("Exploding list")
-        for x in range(0, len(data)):
-            logging.debug("Recursing to list element {0}".format(str(x)))
-            explode_data(data[x], os.path.join(path, str(x)))
+        if not data:
+            os.makedirs(path)
+        for entry in data:
+            explode_data (entry, path)
     else:
         logging.debug("Writing {data} to {path}".format(
             data=data, path=path))
@@ -47,6 +48,32 @@ def explode_data(data, path='output'):
         with open(path, 'w') as outfile:
             outfile.write(str(data))
             outfile.write('\n')
+
+
+def _build_data_guts(path):
+    filename = os.path.basename(path)
+
+    if os.path.isdir(path):
+        child = []
+        files = [f for f in os.listdir(path) if f not in ('.', '..')]
+        for f in files:
+            fp = os.path.join(path, f)
+            child.append(_build_data_guts(fp))
+        return {filename: child}
+    elif os.path.isfile(path):
+        with open(path, 'r') as infile:
+            return {filename: infile.read()}
+
+
+def build_data(path):
+    """Builds a data structure given a path
+
+    Given a path, this function will read it recursively and generate
+    a structure that explode_data() can use to regenerate the same
+    directory and file structure.
+    """
+    data = _build_data_guts(path)
+    return data[data.keys()[0]]
 
 
 def _setup_logging(debug=False):
